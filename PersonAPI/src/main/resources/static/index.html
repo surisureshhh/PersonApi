@@ -1,0 +1,225 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>AngularJS - REST Demo using $http service</title>
+<!-- Load AngularJS -->
+<script
+	src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+<script type="text/javascript">
+            var app = angular.module("PersonManagement", []);
+         
+            //Controller Part
+            app.controller("PersonController", function($scope, $http) {
+         
+                //Initialize page with default data which is blank in this example
+                $scope.persons = [];
+                $scope.form = {
+                		id: -1,
+                		first_name: "",
+                		last_name: "",
+                		age: "",
+                		favourite_colour: "",
+                		hobby: []
+                };
+                //Now load the data from server
+                _refreshPageData();
+         
+                //HTTP POST/PUT methods for add/edit employee
+                $scope.submitPerson = function() {
+         
+                    var method = "";
+                    var url = "";
+                    var hobbies = $scope.form.hobby;
+                    if ($scope.form.id == -1) {
+                        //Id is absent so add employee - POST operation                        
+                    $scope.form.hobby = hobbies.split(",");
+                        method = "POST";
+                        url = '/api/v1/persons';
+                    } else {
+                        //If Id is present, it's edit operation - PUT operation
+                        method = "PUT";
+                        url = '/api/v1/persons/' + $scope.form.id;
+                    }
+         
+                    $http({
+                        method : method,
+                        url : url,
+                        data : angular.toJson($scope.form),
+                        headers : {
+                            'Content-Type' : 'application/json',
+                            'Authorization' : 'Basic YWRtaW46cGFzc3dvcmQ='
+                        }
+                    }).then( _success, _error );
+                };
+         
+                //HTTP DELETE- delete employee by Id
+                $scope.deletePerson = function(person) {
+                    $http({
+                        method : 'DELETE',
+                        url : '/api/v1/persons/' + person.id
+                    }).then(_success, _error);
+                };
+ 
+                //In case of edit employee, populate form with employee data
+                $scope.editPerson = function(person) {
+                    $scope.form.id= person.id,
+                    $scope.form.first_name= person.first_name,
+                    $scope.form.last_name= person.last_name,
+                    $scope.form.age= person.age,
+                    $scope.form.favourite_colour= person.favourite_colour,
+                    $scope.form.hobby= person.hobby;
+                };
+         
+                /* Private Methods */
+                //HTTP GET- get all persons collection
+                function _refreshPageData() {
+                    $http({
+                        method : 'GET',
+                        url : '/api/v1/persons',
+                        headers : {
+                            'Authorization' : 'Basic YWRtaW46cGFzc3dvcmQ='
+                        }
+                    }).then(function successCallback(response) {
+                    	console.log('success'+response);
+                        $scope.persons = response.data;
+                    }, function errorCallback(response) {
+                        _refreshPageData();
+                        console.log('error'+response);
+                    });
+                }
+         
+                function _success(response) {
+                    _clearForm();
+                    _refreshPageData();
+                }
+         
+                function _error(response) {
+                    _refreshPageData();
+                    console.log(response);
+                }
+         
+                //Clear the form
+                function _clearForm() {
+                    $scope.form.id= -1,
+                    $scope.form.first_name= "",
+                    $scope.form.last_name= "",
+                    $scope.form.age= "",
+                    $scope.form.favourite_colour= "",
+                    $scope.form.hobby= []
+                };
+                $scope.arrayToString = function(string){
+                    return string.join(", ");
+                };
+            });
+        </script>
+<style>
+.edit-button {
+	cursor: pointer;
+	color: BLUE;
+	text-transform: uppercase
+}
+.delete-button {
+	cursor: pointer;
+	color: RED;
+	text-transform: uppercase;
+}
+
+th {
+	border: 1px solid grey;
+	background: SteelBlue;
+	color: white;
+	text-align: center;
+}
+tr:nth-child(even) {
+	background: WhiteSmoke;
+}
+ 
+table {
+	width: 75%;
+}
+
+input {
+  width: 60%;
+  padding: 10px 15px;
+  margin: 5px 0;
+  box-sizing: border-box;
+  border: 2px solid #ccc;
+  -webkit-transition: 0.5s;
+  transition: 0.5s;
+  outline: none;
+}
+
+input:focus {
+  border: 2px solid #555;
+}
+
+.container {
+  border-radius: 5px;
+  background-color: #f2f2f2;
+  padding: 35px;
+}
+</style>
+<head>
+<body ng-app="PersonManagement" ng-controller="PersonController">
+	<h1>Person Portal API</h1>
+
+	<table border=1>
+		<tr>
+			<th>Person Id</th>             
+			<th>Person First Name</th>             
+			<th>Person Last Name</th>             
+			<th>Person Age</th>                   
+			<th>Person Favourite Color</th>             
+			<th>Person Hobbies</th>
+			<th>EDIT</th>
+			<th>DELETE</th>
+		</tr>
+
+		<tr ng-repeat="person in persons">
+			            
+			<td>{{ person.id }}</td>             
+			<td>{{ person.first_name }}</td>             
+			<td>{{ person.last_name }}</td>             
+			<td>{{ person.age }}</td>   
+			<td>{{ person.favourite_colour }}</td>          
+			<td>{{arrayToString(person.hobby)}}</td>             
+			<td><a ng-click="editPerson(person)"
+				class="edit-button">Edit</a>  </td>             
+			<td><a ng-click="deletePerson(person)"
+				class="delete-button">Delete</a></td>          
+		</tr>
+
+	</table>
+
+	<h2>Add/Edit Person</h2>
+
+	<form ng-submit="submitPerson()" class="container">
+		<table>
+			<tr>
+				<td>First Name:</td>
+				<td><input type="hidden" ng-model="form.id"/>
+				<input type="text" ng-model="form.first_name" size="60" required/></td>
+			</tr>
+			<tr>
+				<td>Last Name:</td>
+				<td><input type="text" ng-model="form.last_name" size="60" required/></td>
+			</tr>
+			<tr>
+				<td>Age:</td>
+				<td><input type="number" ng-model="form.age" size="60" required/></td>
+			</tr>
+			<tr>
+				<td>Favourite Color:</td>
+				<td><input type="text" ng-model="form.favourite_colour" size="60" required/></td>
+			</tr>
+			<tr>
+				<td>Hobbies:</td>
+				<td><input type="text" ng-model="form.hobby" size="60" required/></td>
+			</tr>
+		</table>
+			<input style="position: absolute;left: 20%;height:30px;width:150px;background-color: #4CAF50;" type="submit" value="Submit" />
+	</form>
+
+</body>
+</html>
