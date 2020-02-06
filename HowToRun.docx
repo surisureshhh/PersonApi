@@ -1,0 +1,7 @@
+steps to run the Project:
+
+1. clone the project from https://github.com/surisureshhh/PersonApi.git
+2. import the project into IDE(eclipse) as maven project.
+3. make sure you have JDK set on Java Build path in IDE(eclipse).
+4. once building workspace is done, right click on the project, click on run as maven build (give goals as clean install).
+
